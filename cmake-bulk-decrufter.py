@@ -53,6 +53,9 @@ class App:
         parser.add_option("-q", "--quiet",
                           action="store_false", dest="verbose", default=True,
                           help="don't print status messages to stdout")
+        parser.add_option("-i", "--inplace",
+                        action="store_true", dest="inplace", default=False,
+                        help="overwrite files with changes inplace")
 
         (self.options, args) = parser.parse_args(self.args_in)
 
@@ -77,9 +80,8 @@ class App:
                 # A trailing newline
                 output = output + "\n"
                 self.runMergeTool(infile, output)
-                # if self.mergetool is not None and len(inputfiles) > 1:
-
-                #	x = raw_input("Press enter to continue to the next file")
+                if self.options.inplace:
+                    open(infile, 'wb').writelines(output)
 
     def processFile(self, filename):
         try:
