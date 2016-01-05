@@ -17,6 +17,7 @@ Iowa State University HCI Graduate Program/VRAC
 # standard packages
 import subprocess
 
+
 ###
 # third-party packages
 # - none
@@ -26,36 +27,36 @@ import subprocess
 # - none
 
 class MergeTool:
-	mergetools = {	"diffmergemac" :	[
-						"/Applications/DiffMerge.app/Contents/MacOS/DiffMerge",
-						"-t1='Decrufted'",
-						"-t2='Result'",
-						"-t3='Original'",
-						"{L}",
-						"{C}",
-						"{R}"],
-					"meld"	:	[
-						"meld",
-						"--diff",
-						"{L}",
-						"{C}",
-						"{R}"],
-					"diffuse"	:	[
-						"diffuse",
-						"{L}",
-						"{C}",
-						"{R}"]}
+    mergetools = {"diffmergemac": [
+        "/Applications/DiffMerge.app/Contents/MacOS/DiffMerge",
+        "-t1='Decrufted'",
+        "-t2='Result'",
+        "-t3='Original'",
+        "{L}",
+        "{C}",
+        "{R}"],
+        "meld": [
+            "meld",
+            "--diff",
+            "{L}",
+            "{C}",
+            "{R}"],
+        "diffuse": [
+            "diffuse",
+            "{L}",
+            "{C}",
+            "{R}"]}
 
-	def __init__(self, tool):
-		self.tool = self.mergetools[tool]
+    def __init__(self, tool):
+        self.tool = self.mergetools[tool]
 
-	def run(self, left, center, right):
-		args = [	arg.format(L=left, R=right, C=center)
-					for arg in self.tool	]
-		return subprocess.call(args)
+    def run(self, left, center, right):
+        args = [arg.format(L=left, R=right, C=center)
+                for arg in self.tool]
+        return subprocess.call(args)
 
 ###
 # __main__
 
-#if __name__ == "__main__":
+# if __name__ == "__main__":
 #	pass

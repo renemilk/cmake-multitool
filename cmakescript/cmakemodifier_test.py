@@ -36,62 +36,64 @@ import findcmakescripts
 inputparse = dict()
 expectedoutput = dict()
 
+
 def setUp():
-	infiles = glob.glob(os.path.split(__file__)[0] + '/testdata/Modifications/*.parse')
-	infiles.sort()
-	outfiles = glob.glob(os.path.split(__file__)[0] + '/testdata/Modifications/*.output')
-	outfiles.sort()
+    infiles = glob.glob(os.path.split(__file__)[0] + '/testdata/Modifications/*.parse')
+    infiles.sort()
+    outfiles = glob.glob(os.path.split(__file__)[0] + '/testdata/Modifications/*.output')
+    outfiles.sort()
 
-	assert len(outfiles) == len(infiles)
-	assert len(infiles) == 2
+    assert len(outfiles) == len(infiles)
+    assert len(infiles) == 2
 
+    for infile, outfile in zip(infiles, outfiles):
+        ibase = os.path.splitext(infile)[0]
+        obase = os.path.splitext(outfile)[0]
+        assert ibase == obase
 
+        inputf = open(infile, 'r')
+        inputstr = inputf.read()
+        inputf.close()
 
-	for infile, outfile in zip(infiles, outfiles):
-		ibase = os.path.splitext(infile)[0]
-		obase = os.path.splitext(outfile)[0]
-		assert ibase == obase
+        outputf = open(outfile, 'r')
+        outputstr = outputf.read()
+        outputf.close()
 
-		inputf = open(infile, 'r')
-		inputstr = inputf.read()
-		inputf.close()
+        indata = eval(inputstr)
+        outdata = eval(outputstr)
 
-		outputf = open(outfile, 'r')
-		outputstr = outputf.read()
-		outputf.close()
-
-		indata = eval(inputstr)
-		outdata = eval(outputstr)
-
-	dataKeys = inputparse.keys()
+    dataKeys = inputparse.keys()
 
 
 ## Requirement:
 ## A given input parse has only one expected output parse
 class ExpectedCleanup(unittest.TestCase):
+    subtest = ""
 
-	subtest = ""
+    if "nose" in dir():
+        def _exc_info(self):
+            print
+            "Subtest info:"
+            print
+            self.subtest
+            return super(ExpectedCleanup, self)._exc_info()
 
-	if "nose" in dir():
-		def _exc_info(self):
-			print "Subtest info:"
-			print self.subtest
-			return super(ExpectedCleanup, self)._exc_info()
+    def testApplyVisitor(self):
+        """passing in a known-good parse with subdirs and checking the result"""
+        for key in inputparse.keys():
+            inparse = inputparse[key]
+            expected = expectedoutput[key]
+            self.subtest = key
+            self.assertEqual(cmakemodifier.apply_all_cleanup_visitors(inparse), expected)
 
-	def testApplyVisitor(self):
-		"""passing in a known-good parse with subdirs and checking the result"""
-		for key in inputparse.keys():
-			inparse = inputparse[key]
-			expected = expectedoutput[key]
-			self.subtest = key
-			self.assertEqual(cmakemodifier.apply_all_cleanup_visitors(inparse), expected)
 
-if __name__=="__main__":
-	## Run tests if executed directly
-	try:
-		import nose
-		start = nose.main
-	except (ImportError):
-		start = unittest.main
+if __name__ == "__main__":
+    ## Run tests if executed directly
+    try:
+        import nose
 
-	start()
+        start = nose.main
+    except (ImportError):
+        start = unittest.main
+
+    start()

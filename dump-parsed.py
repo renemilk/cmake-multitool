@@ -28,31 +28,36 @@ from optparse import OptionParser
 # internal packages
 import cmakescript
 
+
 class App:
-	def __init__(self, args_in=sys.argv[1:]):
-		self.args_in = args_in
+    def __init__(self, args_in=sys.argv[1:]):
+        self.args_in = args_in
 
-	def main(self):
-		for infile in self.args_in:
-			print self.processFile(infile)
+    def main(self):
+        for infile in self.args_in:
+            print
+            self.processFile(infile)
 
-	def processFile(self, filename):
-		try:
-			parser = cmakescript.parse_file(filename)
-		except cmakescript.IncompleteStatementError:
-			print "Error parsing file: IncompleteStatementError"
-			return None
-		except cmakescript.UnclosedChildBlockError:
-			print "Error parsing file: UnclosedChildBlockError"
-			return None
+    def processFile(self, filename):
+        try:
+            parser = cmakescript.parse_file(filename)
+        except cmakescript.IncompleteStatementError:
+            print
+            "Error parsing file: IncompleteStatementError"
+            return None
+        except cmakescript.UnclosedChildBlockError:
+            print
+            "Error parsing file: UnclosedChildBlockError"
+            return None
 
-		tree = cmakescript.CMakeBlock(parser.parsetree)
-		return repr(tree)
+        tree = cmakescript.CMakeBlock(parser.parsetree)
+        return repr(tree)
+
 
 ###
 # __main__
 
 if __name__ == "__main__":
-## Can be used as a tool when executed directly
-	app = App()
-	app.main()
+    ## Can be used as a tool when executed directly
+    app = App()
+    app.main()

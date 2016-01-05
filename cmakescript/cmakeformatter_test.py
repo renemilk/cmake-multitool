@@ -15,7 +15,6 @@ import re
 import os
 import glob
 
-
 ###
 # third-party packages
 # - none
@@ -26,7 +25,6 @@ import cmakeparser
 import cmakegrammar
 import cmakeformatter
 import findcmakescripts
-
 
 # format for each:
 # key is the filename - extension
@@ -42,88 +40,89 @@ parsedstrings = dict()
 parseduppers = dict()
 parsedlowers = dict()
 
+
 def setUp():
-	cmakes = glob.glob(os.path.split(__file__)[0] + '/testdata/KnownValues/*.cmake')
-	cmakes.sort()
-	parses = glob.glob(os.path.split(__file__)[0] + '/testdata/KnownValues/*.parse')
-	parses.sort()
+    cmakes = glob.glob(os.path.split(__file__)[0] + '/testdata/KnownValues/*.cmake')
+    cmakes.sort()
+    parses = glob.glob(os.path.split(__file__)[0] + '/testdata/KnownValues/*.parse')
+    parses.sort()
 
-	assert len(parses) == len(cmakes)
-	assert len(parses) == 10
+    assert len(parses) == len(cmakes)
+    assert len(parses) == 10
 
+    for cmakefn, parsefn in zip(cmakes, parses):
+        cbase = os.path.splitext(cmakefn)[0]
+        pbase = os.path.splitext(parsefn)[0]
+        assert cbase == pbase
 
+        cmakef = open(cmakefn, 'r')
+        cmakestr = cmakef.read()
+        cmakef.close()
 
-	for cmakefn, parsefn in zip(cmakes, parses):
-		cbase = os.path.splitext(cmakefn)[0]
-		pbase = os.path.splitext(parsefn)[0]
-		assert cbase == pbase
+        parsef = open(parsefn, 'r')
+        parsestr = parsef.read()
+        parsef.close()
 
-		cmakef = open(cmakefn, 'r')
-		cmakestr = cmakef.read()
-		cmakef.close()
+        parsedata = eval(parsestr)
 
-		parsef = open(parsefn, 'r')
-		parsestr = parsef.read()
-		parsef.close()
+        # case-change our known parses, but don't touch "None" because it's
+        #
+        applyExceptToNone = lambda userfunc, string, untouchable: untouchable.join(
+                [userfunc(chunk)
+                 for chunk
+                 in string.split(untouchable)])
 
-		parsedata = eval(parsestr)
+        safeUpper = lambda input: applyExceptToNone(lambda x: x.upper(), input, "None")
+        safeLower = lambda input: applyExceptToNone(lambda x: x.lower(), input, "None")
 
-		# case-change our known parses, but don't touch "None" because it's
-		#
-		applyExceptToNone = lambda userfunc, string, untouchable:	untouchable.join(
-			[	userfunc(chunk)
-				for chunk
-				in string.split(untouchable)	]	)
+        parseupper = safeUpper(parsestr)
+        parselower = safeLower(parsestr)
 
-		safeUpper = lambda input: applyExceptToNone(lambda x: x.upper(), input, "None")
-		safeLower = lambda input: applyExceptToNone(lambda x: x.lower(), input, "None")
+        inputfiles[cbase] = cmakefn
+        inputstrings[cbase] = cmakestr
+        inputuppers[cbase] = safeUpper(cmakestr)
+        inputlowers[cbase] = safeLower(cmakestr)
 
-		parseupper = safeUpper(parsestr)
-		parselower = safeLower(parsestr)
+        parsedfiles[cbase] = parsedata
+        parsedstrings[cbase] = parsedata
 
-		inputfiles[cbase] = cmakefn
-		inputstrings[cbase] = cmakestr
-		inputuppers[cbase] = safeUpper(cmakestr)
-		inputlowers[cbase] = safeLower(cmakestr)
+        parseduppers[cbase] = parseupper
+        parsedlowers[cbase] = parselower
 
-		parsedfiles[cbase] = parsedata
-		parsedstrings[cbase] = parsedata
+    dataKeys = inputfiles.keys()
 
-		parseduppers[cbase] = parseupper
-		parsedlowers[cbase] = parselower
-
-	dataKeys = inputfiles.keys()
 
 ## Requirement:
 ## Given a valid parse, produce an output
 class KnownParses(unittest.TestCase):
+    subtest = ""
 
-	subtest = ""
+    if "nose" in dir():
+        def _exc_info(self):
+            print
+            "Subtest info:"
+            print
+            self.subtest
+            return super(KnownParses, self)._exc_info()
 
-	if "nose" in dir():
-		def _exc_info(self):
-			print "Subtest info:"
-			print self.subtest
-			return super(KnownParses, self)._exc_info()
+    def testCanOutputKnownParses(self):
+        """passing in a known-good parse to the formatter"""
+        for key in parsedstrings.keys():
+            self.subtest = key
+            formatter = cmakeformatter.CMakeFormatter(parsedstrings[key])
+            formatter.output_as_cmake()
+            self.assertNotEqual(formatter.output_as_cmake(), "")
 
-	def testCanOutputKnownParses(self):
-		"""passing in a known-good parse to the formatter"""
-		for key in parsedstrings.keys():
-			self.subtest = key
-			formatter = cmakeformatter.CMakeFormatter(parsedstrings[key])
-			formatter.output_as_cmake()
-			self.assertNotEqual(formatter.output_as_cmake(), "")
-
-	def testKnownParsesRoundtrip(self):
-		"""parsing formatted output should match the input parse"""
-		for key in parsedstrings.keys():
-			self.subtest = key
-			formatter = cmakeformatter.CMakeFormatter(parsedstrings[key])
-			formatted = formatter.output_as_cmake()
-			self.assertEqual(cmakeparser.parse_string(formatted).parsetree, parsedstrings[key])
+    def testKnownParsesRoundtrip(self):
+        """parsing formatted output should match the input parse"""
+        for key in parsedstrings.keys():
+            self.subtest = key
+            formatter = cmakeformatter.CMakeFormatter(parsedstrings[key])
+            formatted = formatter.output_as_cmake()
+            self.assertEqual(cmakeparser.parse_string(formatted).parsetree, parsedstrings[key])
 
 
-#class WildModules(unittest.TestCase):
+# class WildModules(unittest.TestCase):
 #	def setUp(self):
 #		basedir = os.path.split(__file__)[0] + '/testdata/WildModules'
 #		self.modules = findcmakescripts.find_cmake_scripts(basedir)
@@ -140,12 +139,13 @@ class KnownParses(unittest.TestCase):
 #			self.assertEqual(cmakeparser.parse_string(formatted).parsetree, parser.parsetree)
 
 
-if __name__=="__main__":
-	## Run tests if executed directly
-	try:
-		import nose
-		start = nose.main
-	except (ImportError):
-		start = unittest.main
+if __name__ == "__main__":
+    ## Run tests if executed directly
+    try:
+        import nose
 
-	start()
+        start = nose.main
+    except (ImportError):
+        start = unittest.main
+
+    start()
